@@ -2,41 +2,334 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>NextDNS PATCH Request Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NextDNS Manager</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-right: 5px;
+        }
+
+        .primary {
+            background: #007aff;
+            color: white;
+        }
+
+        .danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .domain {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
 
-    <h1>Update NextDNS Profile</h1>
-    <button id="updateBtn">Turn Off YouTube</button>
-    <p id="result"></p>
+    <h1>NextDNS Manager</h1>
 
-    <script>
-        const profileId = "b97e76";
-        const apiKey = "89f3bbf5ab2e87d54caa68c45ca8a5823e2cced3";
-        const url = `https://api.nextdns.io/profiles/${profileId}/parentalControl/services/youtube`;
+    <div class="box">
 
-        document.getElementById('updateBtn').addEventListener('click', async () => {
-            try {
-                const response = await fetch(url, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Api-Key': apiKey
-                    },
-                    body: JSON.stringify({ active: false })
-                });
+        <h2>Profile</h2>
 
-                if (response.ok) {
-                    document.getElementById('result').innerText = "Successfully updated NextDNS profile!";
-                } else {
-                    document.getElementById('result').innerText = `Error: ${response.status} ${response.statusText}`;
-                }
-            } catch (error) {
-                console.error('Request failed:', error);
-                document.getElementById('result').innerText = "Request failed. Check console.";
+        <input
+            id="profileInput"
+            type="text"
+            placeholder="NextDNS profile ID"
+        >
+
+        <button class="primary" onclick="loadDenylist()">
+            Load Denylist
+        </button>
+
+    </div>
+
+    <div class="box">
+
+        <h2>Add domain</h2>
+
+        <input
+            id="domainInput"
+            type="text"
+            placeholder="example.com"
+        >
+
+        <button class="primary" onclick="addDomain()">
+            Block Domain
+        </button>
+
+    </div>
+
+    <div class="box">
+
+        <h2>Denylist</h2>
+
+        <div id="denylist">
+            Nothing loaded yet.
+        </div>
+
+    </div>
+
+    <div id="status"></div>
+
+<script>
+
+const WORKER_URL = "https://portal.owencooperfun.workers.dev";
+
+let profileId = "";
+
+function setStatus(message, error = false) {
+
+    const status = document.getElementById("status");
+
+    status.textContent = message;
+
+    status.style.color = error ? "red" : "green";
+}
+
+
+async function loadDenylist() {
+
+    profileId =
+        document.getElementById("profileInput").value.trim();
+
+    if (!profileId) {
+        setStatus("Enter a profile ID.", true);
+        return;
+    }
+
+    setStatus("Loading...");
+
+    try {
+
+        const response = await fetch(
+            `${WORKER_URL}/profiles/${encodeURIComponent(profileId)}/denylist`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || "Failed to load denylist"
+            );
+        }
+
+        displayDenylist(data.data || data);
+
+        setStatus("Denylist loaded.");
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus(
+            "Failed to load denylist: " + error.message,
+            true
+        );
+    }
+}
+
+
+function displayDenylist(list) {
+
+    const container =
+        document.getElementById("denylist");
+
+    container.innerHTML = "";
+
+    if (!Array.isArray(list) || list.length === 0) {
+
+        container.textContent =
+            "Your denylist is empty.";
+
+        return;
+    }
+
+    list.forEach(entry => {
+
+        const domain =
+            typeof entry === "string"
+                ? entry
+                : entry.id || entry.domain;
+
+        if (!domain) return;
+
+        const row =
+            document.createElement("div");
+
+        row.className = "domain";
+
+        const name =
+            document.createElement("span");
+
+        name.textContent = domain;
+
+        const button =
+            document.createElement("button");
+
+        button.textContent = "Unblock";
+
+        button.className = "danger";
+
+        button.onclick =
+            () => unblockDomain(domain);
+
+        row.appendChild(name);
+        row.appendChild(button);
+
+        container.appendChild(row);
+    });
+}
+
+
+async function unblockDomain(domain) {
+
+    if (!confirm(`Unblock ${domain}?`)) {
+        return;
+    }
+
+    setStatus(`Unblocking ${domain}...`);
+
+    try {
+
+        const response = await fetch(
+            `${WORKER_URL}/profiles/${encodeURIComponent(profileId)}/denylist/${encodeURIComponent(domain)}`,
+            {
+                method: "DELETE"
             }
-        });
-    </script>
+        );
+
+        const text = await response.text();
+
+        if (!response.ok) {
+
+            throw new Error(
+                text || "Failed to unblock domain"
+            );
+        }
+
+        setStatus(`${domain} has been unblocked.`);
+
+        await loadDenylist();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus(
+            "Failed to unblock: " + error.message,
+            true
+        );
+    }
+}
+
+
+async function addDomain() {
+
+    const domain =
+        document.getElementById("domainInput")
+            .value
+            .trim();
+
+    if (!domain) {
+        setStatus("Enter a domain.", true);
+        return;
+    }
+
+    if (!profileId) {
+        setStatus("Load a profile first.", true);
+        return;
+    }
+
+    setStatus(`Blocking ${domain}...`);
+
+    try {
+
+        const response = await fetch(
+            `${WORKER_URL}/profiles/${encodeURIComponent(profileId)}/denylist`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    domain: domain
+                })
+            }
+        );
+
+        const text = await response.text();
+
+        if (!response.ok) {
+
+            throw new Error(
+                text || "Failed to block domain"
+            );
+        }
+
+        document.getElementById("domainInput").value = "";
+
+        setStatus(`${domain} has been blocked.`);
+
+        await loadDenylist();
+
+    } catch (error) {
+
+        console.error(error);
+
+        setStatus(
+            "Failed to block: " + error.message,
+            true
+        );
+    }
+}
+
+</script>
 
 </body>
 </html>
