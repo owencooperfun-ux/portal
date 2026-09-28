@@ -1,115 +1,140 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website Blocked</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+```
+<style>
+    * {
+        box-sizing: border-box;
+    }
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: #1c1c1e;
-            color: #f5f5f7;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                         Roboto, Helvetica, Arial, sans-serif;
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: #1c1c1e;
+        color: #f5f5f7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                     Roboto, Helvetica, Arial, sans-serif;
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-        .container {
-            width: 90%;
-            max-width: 520px;
-            text-align: center;
-            padding: 40px;
-        }
+    .container {
+        width: 90%;
+        max-width: 650px;
+        text-align: center;
+        padding: 40px;
+    }
 
-        .icon {
-            width: 72px;
-            height: 72px;
-            margin: 0 auto 28px;
+    .icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 28px;
 
-            border-radius: 18px;
-            background: #2c2c2e;
+        border-radius: 18px;
+        background: #2c2c2e;
 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-            font-size: 34px;
-        }
+        font-size: 34px;
+    }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin: 0 0 14px;
-        }
+    h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 14px;
+    }
 
-        p {
-            color: #a1a1a6;
-            font-size: 16px;
-            line-height: 1.6;
-            margin: 0 auto;
-            max-width: 440px;
-        }
+    p {
+        color: #a1a1a6;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0 auto;
+        max-width: 440px;
+    }
 
-        .url {
-            margin-top: 24px;
-            padding: 12px 16px;
+    .url {
+        margin-top: 24px;
+        padding: 12px 16px;
 
-            background: #2c2c2e;
-            border-radius: 10px;
+        background: #2c2c2e;
+        border-radius: 10px;
 
-            color: #d1d1d6;
-            font-size: 14px;
+        color: #d1d1d6;
+        font-size: 14px;
 
-            word-break: break-all;
-        }
+        word-break: break-all;
+        text-align: left;
 
-        .footer {
-            margin-top: 32px;
-            font-size: 13px;
-            color: #636366;
-        }
-    </style>
+        max-height: 250px;
+        overflow: auto;
+        white-space: pre-wrap;
+    }
+
+    .footer {
+        margin-top: 32px;
+        font-size: 13px;
+        color: #636366;
+    }
+</style>
+```
+
 </head>
 
 <body>
 
-    <div class="container">
+```
+<div class="container">
 
-        <div class="icon">
-            🚫
-        </div>
-
-        <h1>Website Blocked</h1>
-
-        <p>
-            The website you have tried to visit has been blocked
-            by an administrator.
-        </p>
-
-        <div class="url" id="blocked-url">
-            Loading website...
-        </div>
-
-        <div class="footer">
-            If you believe this website has been blocked incorrectly,
-            please contact your administrator.
-        </div>
-
+    <div class="icon">
+        🚫
     </div>
 
-    <script>
-        document.getElementById("blocked-url").textContent =
-            window.location.href;
-    </script>
+    <h1>Website Blocked</h1>
+
+    <p>
+        The website you have tried to visit has been blocked
+        by an administrator.
+    </p>
+
+    <div class="url" id="blocked-url">
+        Loading page source...
+    </div>
+
+    <div class="footer">
+        If you believe this website has been blocked incorrectly,
+        please contact your administrator.
+    </div>
+
+</div>
+
+<script>
+    // Automatically fetch the page source when the page loads
+    fetch('https://example.com')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error: ${response.status}`);
+            }
+
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('blocked-url').textContent = html;
+        })
+        .catch(error => {
+            document.getElementById('blocked-url').textContent =
+                'Unable to load page source.\n\n' + error.message;
+        });
+</script>
+```
 
 </body>
 </html>
